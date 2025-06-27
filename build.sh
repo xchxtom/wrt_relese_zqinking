@@ -67,6 +67,12 @@ FIRMWARE_DIR="$BASE_PATH/firmware"
 \rm -rf "$FIRMWARE_DIR"
 mkdir -p "$FIRMWARE_DIR"
 find "$TARGET_DIR" -type f \( -name "*.bin" -o -name "*.manifest" -o -name "*efi.img.gz" -o -name "*.itb" -o -name "*.fip" -o -name "*.ubi" -o -name "*rootfs.tar.gz" \) -exec cp -f {} "$FIRMWARE_DIR/" \;
+# 打包ipk插件
+IPK_DIR="$TARGET_DIR"
+PKG_ARCHIVE="$FIRMWARE_DIR/packages.tar.gz"
+
+# 查找所有 ipk 并打包
+find "$IPK_DIR" -type f -name "*.ipk" | tar -czf "$PKG_ARCHIVE" -T -
 \rm -f "$BASE_PATH/firmware/Packages.manifest" 2>/dev/null
 
 if [[ -d $BASE_PATH/action_build ]]; then
