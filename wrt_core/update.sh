@@ -99,7 +99,7 @@ main() {
     install_pbr_cmcc
     fix_pbr_ip_forward
     update_package "runc" "releases" "v1.3.3"
-    update_package "containerd" "releases" "v1.7.28"
+    update_package "containerd" "releases" "v2.2.3"
     update_package "docker" "tags" "v29.4.3"
     update_package "dockerd" "releases" "v29.4.3"
     # apply_hash_fixes
