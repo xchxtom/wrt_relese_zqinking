@@ -98,7 +98,7 @@ main() {
     fix_quectel_cm
     install_pbr_cmcc
     fix_pbr_ip_forward
-    update_package "runc" "releases" "v1.3.3"
+    update_package "runc" "releases" "v1.3.5"
     update_package "containerd" "releases" "v2.2.3"
     update_package "docker" "tags" "v29.4.3"
     update_package "dockerd" "releases" "v29.4.3"
