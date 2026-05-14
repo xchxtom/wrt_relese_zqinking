@@ -138,7 +138,7 @@ update_ath11k_fw() {
         # === 重点修改部分：修正哈希值 ===
         echo "修正远程 Makefile 中的哈希校验值..."
         # 将 Makefile 里的 PKG_MIRROR_HASH 替换为日志要求的正确 hash
-        sed -i 's/PKG_MIRROR_HASH:=.*/PKG_MIRROR_HASH:=d018b9cf814feff583f7cb5b6261dc2f2767b949ea83e76ada962e58674adafb/g' "$new_mk"
+        sed -i 's/PKG_MIRROR_HASH:=.*/PKG_MIRROR_HASH:=d018b9cf814feff583f7cb5b6261dc2f2767b949ea83e76ada962e58674adafb/g' "$makefile"
         # =============================
 
         if [ -f "$ipq60_target" ]; then
