@@ -135,11 +135,11 @@ update_ath11k_fw() {
         fi
         mv -f "$new_mk" "$makefile"
 
-        # === 核心修复：强制更新 Makefile 中的 PKG_HASH ===
-        # 根据日志：需要将 505f078... 替换为d018b9c...
-        echo "修正 ath11k-firmware 校验哈希值..."
-        sed -i 's/505f0781b819560fbe64f1e4ff3a1da8694e66af37469a0bfae8b9de44e0be1c/d018b9cf814feff583f7cb5b6261dc2f2767b949ea83e76ada962e58674adafb/g' "$makefile"
-        #===
+        # === 重点修改部分：修正哈希值 ===
+        echo "修正远程 Makefile 中的哈希校验值..."
+        # 将 Makefile 里的 PKG_MIRROR_HASH 替换为日志要求的正确 hash
+        sed -i 's/PKG_MIRROR_HASH:=.*/PKG_MIRROR_HASH:=d018b9cf814feff583f7cb5b6261dc2f2767b949ea83e76ada962e58674adafb/g' "$new_mk"
+        # =============================
 
         if [ -f "$ipq60_target" ]; then
             sed -i 's/ath11k-firmware-ipq6018\([^-[:alnum:]_]\|$\)/ath11k-firmware-ipq6018-ddwrt\1/g' "$ipq60_target"
