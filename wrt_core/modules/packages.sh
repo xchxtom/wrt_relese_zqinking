@@ -5,14 +5,14 @@ remove_unwanted_packages() {
         "luci-app-passwall" "luci-app-ddns-go" "luci-app-rclone" "luci-app-ssr-plus"
         "luci-app-vssr" "luci-app-daed" "luci-app-dae" "luci-app-alist" "luci-app-homeproxy"
         "luci-app-haproxy-tcp" "luci-app-openclash" "luci-app-mihomo" "luci-app-appfilter"
-        "luci-app-msd_lite" "luci-app-unblockneteasemusic" "luci-app-adguardhome" "luci-app-tailscale"
+        "luci-app-msd_lite" "luci-app-unblockneteasemusic" "luci-app-adguardhome"
     )
     local packages_net=(
         "haproxy" "xray-core" "xray-plugin" "dns2socks" "alist" "hysteria"
         "mosdns" "adguardhome" "ddns-go" "naiveproxy" "shadowsocks-rust"
         "sing-box" "v2ray-core" "v2ray-geodata" "v2ray-plugin" "tuic-client"
         "chinadns-ng" "ipt2socks" "tcping" "trojan-plus" "simple-obfs" "shadowsocksr-libev"
-        "dae" "daed" "mihomo" "geoview" "open-app-filter" "msd_lite"
+        "dae" "daed" "mihomo" "geoview" "open-app-filter" "msd_lite" "tailscale"
     )
     local packages_utils=(
         "cups"
@@ -154,7 +154,7 @@ install_custom_feed() {
         luci-app-ddns-go taskd luci-lib-xterm luci-lib-taskd luci-app-store quickstart \
         luci-app-quickstart luci-app-istorex luci-app-cloudflarespeedtest netdata luci-app-netdata \
         lucky luci-app-lucky luci-app-openclash luci-app-homeproxy luci-app-amlogic \
-        oaf open-app-filter luci-app-oaf easytier luci-app-easytier \
+        tailscale luci-app-tailscale oaf open-app-filter luci-app-oaf easytier luci-app-easytier \
         msd_lite luci-app-msd_lite cups luci-app-cupsd
     )
     local required_feed_dirs=(
@@ -228,7 +228,7 @@ verify_custom_feed_installed_paths() {
     local custom_feed_package_dir
     local required_package_dirs=(
         luci-app-adguardhome luci-app-mosdns v2ray-geodata luci-app-easytier
-        luci-app-passwall nikki luci-app-nikki mihomo-meta
+        luci-app-passwall nikki luci-app-nikki mihomo-meta tailscale luci-app-tailscale
     )
     local missing_package_dirs=()
 
