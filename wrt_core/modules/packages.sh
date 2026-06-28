@@ -301,11 +301,11 @@ add_ax6600_led() {
 }
 
 update_homeproxy() {
-    local repo_url="https://github.com/immortalwrt/homeproxy.git"
+    local repo_url="https://github.com/xchxtom/luci-app-homeproxy.git"
     local target_dir="$(get_custom_feed_worktree_dir)/luci-app-homeproxy"
 
     if [ -d "$target_dir" ]; then
-        echo "正在更新 homeproxy..."
+        echo "正在从 xchxtom 仓库更新 homeproxy..."
         rm -rf "$target_dir"
         if ! git clone --depth 1 "$repo_url" "$target_dir"; then
             echo "错误：从 $repo_url 克隆 homeproxy 仓库失败" >&2
@@ -314,6 +314,39 @@ update_homeproxy() {
     fi
 }
 
+update_singbox() {
+    local target_dir="$(get_custom_feed_worktree_dir)/sing-box"
+    # 容错：如果 feeds 体系尚未完全展开，尝试去本地源源目录寻找
+    if [ ! -d "$target_dir" ]; then
+        target_dir="$(get_custom_feed_source_dir)/sing-box"
+    fi
+
+    if [ -d "$target_dir" ]; then
+        echo "正在将 sing-box 锁定编译为 1.11.1 版本..."
+        local mk_path="$target_dir/Makefile"
+        if [ -f "$mk_path" ]; then
+            # 1. 强行修改 Makefile 中的版本号
+            sed -i 's/^PKG_VERSION:=.*/PKG_VERSION:=1.11.1/g' "$mk_path"
+            
+            # 2. 动态获取并更新 sing-box 1.11.1 官方源码的 SHA256 哈希值（防止 OpenWrt 报错）
+            echo "正在获取 sing-box v1.11.1 源码校验和..."
+            local openwrt_tarball_url="https://codeload.github.com/SagerNet/sing-box/tar.gz/v1.11.1"
+            local pkg_hash
+            pkg_hash=$(curl -fsSL "$openwrt_tarball_url" | sha256sum | cut -d' ' -f1)
+            
+            if [ -n "$pkg_hash" ]; then
+                sed -i "s/^PKG_HASH:=.*/PKG_HASH:=$pkg_hash/g" "$mk_path"
+                echo "sing-box 已成功锁定至 1.11.1，哈希值为: $pkg_hash"
+            else
+                # 如果网络波动获取失败，退化为 skip 跳过哈希校验（部分 OpenWrt 固件支持）
+                echo "警告：未能获取 sing-box 源码哈希，尝试使用 skip 绕过" >&2
+                sed -i "s/^PKG_HASH:=.*/PKG_HASH:=skip/g" "$mk_path"
+            fi
+        fi
+    else
+        echo "警告：未找到 sing-box 源码目录，跳过版本锁定。" >&2
+    fi
+}
 add_timecontrol() {
     local timecontrol_dir="$BUILD_DIR/package/luci-app-timecontrol"
     local repo_url="https://github.com/sirpdboy/luci-app-timecontrol.git"
