@@ -71,8 +71,8 @@ jobs:
             ./action_build/.ccache
             ./action_build/staging_dir
           key: ${{ matrix.os }}-${{ hashFiles('repo_flag') }}-${{ env.BUILD_DATE }}
-restore-keys: |
-  ${{ matrix.os }}-${{ hashFiles('repo_flag') }}-
+          restore-keys: |
+            ${{ matrix.os }}-${{ hashFiles('repo_flag') }}-
 
       - name: Refresh the cache
         run: |
