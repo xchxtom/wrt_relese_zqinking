@@ -120,8 +120,12 @@ jobs:
       - name: Delete Old Cache
         run: |
           # 获取缓存列表并删除
-          gh cache list --key ${{ matrix.os }}-${{ hashFiles('**/repo_flag') }}- --json key --jq '.[] | .key' | while read -r key; do
-            gh cache delete "$key"
+          gh cache list \
+            --key "${{ matrix.os }}-${{ inputs.model }}-" \
+            --json key \
+            --jq '.[].key' |
+          while read -r key; do
+            [ -n "$key" ] && gh cache delete "$key" --confirm
           done
           # 输出缓存状态
           echo "========cache status========"
