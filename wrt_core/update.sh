@@ -123,6 +123,12 @@ stage_feeds_install() {
 }
 
 stage_post_install_package_fixes() {
+    # 在 package/feeds/* 已生成后打补丁，先尝试修补 libxcrypt Makefile
+    if declare -f patch_libxcrypt_makefile >/dev/null 2>&1; then
+        patch_libxcrypt_makefile || echo "patch_libxcrypt_makefile 返回非零，继续后续步骤"
+    else
+        echo "patch_libxcrypt_makefile 未定义，跳过 libxcrypt 修补"
+    fi
     # 这里处理已安装到 package/feeds/* 的包和最终一致性检查。
     verify_custom_feed_installed_paths
     docker_stack_sync_nftables_compat "$BUILD_DIR" "0"
