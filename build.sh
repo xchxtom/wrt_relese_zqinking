@@ -343,7 +343,7 @@ RUN apt-get update && apt-get install -y sudo git jq build-essential cmake g++ c
 USER $container_default_user
 RUN git config --global pull.rebase false
 RUN git config --global advice.detachedHead false
-CMD ["bash", "wrt_core/build_container.sh", "$image_name"]
+CMD ["bash", "wrt_core/build_container.sh", "${image_name}"]
 EOF
     docker build -t "$image_name" -f "$container_tmp_Dockerfile" .
 }
@@ -385,6 +385,35 @@ remove_uhttpd_dependency() {
             echo "Removed uhttpd (luci-light) dependency as luci-app-quickfile (nginx) is enabled."
         fi
     fi
+}
+
+# 在构建目录下查找 libxcrypt 的 Makefile 并追加 TARGET_CFLAGS（幂等）
+# 该函数在 install_feeds 之后调用（package/feeds/* 已存在时生效）
+patch_libxcrypt_makefile() {
+    echo "尝试为 libxcrypt Makefile 添加 TARGET_CFLAGS 修复..."
+    local found
+    # 在 BUILD_DIR 下搜索 libxcrypt 的 Makefile（只取第一个匹配）
+    found=$(find "${BUILD_DIR:-.}" -type f -name Makefile -path "*libxcrypt*" -print -quit 2>/dev/null || true)
+    if [ -z "$found" ]; then
+        echo "未找到 libxcrypt Makefile（在 ${BUILD_DIR:-.} 下）。可能尚未生成，跳过。"
+        return 0
+    fi
+
+    echo "找到 Makefile：$found"
+    # 如果已存在标记则不重复追加
+    if grep -Fq "TARGET_CFLAGS += -Wno-error=format-nonliteral" "$found"; then
+        echo "Makefile 已包含修复项，跳过追加。"
+        return 0
+    fi
+
+    cat >> "$found" <<'EOF'
+
+# Disable format-nonliteral warning being treated as error from toolchain fortify headers
+# This avoids build failures where snprintf/sprintf are called with non-literal format strings
+TARGET_CFLAGS += -Wno-error=format-nonliteral -Wno-format-nonliteral
+EOF
+
+    echo "已向 $found 追加 TARGET_CFLAGS 修复。"
 }
 
 if [[ $Build_Mod == "container" ]]; then
@@ -456,12 +485,16 @@ if [[ -d $TARGET_DIR ]]; then
 fi
 
 make download -j$(($(nproc) * 2))
+
+# 在下载并安装 feeds 后尝试修补 libxcrypt 的 Makefile，避免 toolchain fortify 触发 -Werror=format-nonliteral
+patch_libxcrypt_makefile
+
 make -j$(($(nproc) + 1)) || make -j1 V=s
 
 FIRMWARE_DIR="$BASE_PATH/../firmware"
 \rm -rf "$FIRMWARE_DIR"
 mkdir -p "$FIRMWARE_DIR"
-find "$TARGET_DIR" -type f \( -name "*.bin" -o -name "*.manifest" -o -name "*efi.img.gz" -o -name "*.itb" -o -name "*.fip" -o -name "*.ubi" -o -name "*rootfs.tar.gz" \) -exec cp -f {} "$FIRMWARE_DIR/" \;
+find "$TARGET_DIR" -type f \( -name "*.bin" -o -name "*.manifest" -o -name "*efi.img.gz" -o -name "*.itb" -o -name "*.fip" -o -name "*.ubi" -o -name "*rootfs.tar.gz" \) -exec cp -f {} "$FIRMWARE_DIR" \;
 
 # 打包ipk插件
 IPK_DIR="$BASE_PATH/../$BUILD_DIR/bin"
