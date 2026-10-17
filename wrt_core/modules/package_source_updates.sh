@@ -355,3 +355,32 @@ update_package() {
         echo "更新软件包 $1 到 $PKG_VER $PKG_HASH"
     fi
 }
+
+patch_libxcrypt_makefile() {
+    # 在构建目录下查找 libxcrypt 的 Makefile 并追加 TARGET_CFLAGS（幂等）
+    # 该函数在 install_feeds 之后调用（package/feeds/* 已存在时生效）
+    echo "尝试为 libxcrypt Makefile 添加 TARGET_CFLAGS 修复..."
+    local found
+    # 在 BUILD_DIR 下搜索 libxcrypt 的 Makefile（只取第一个匹配）
+    found=$(find "${BUILD_DIR:-.}" -type f -name Makefile -path "*libxcrypt*" -print -quit 2>/dev/null || true)
+    if [ -z "$found" ]; then
+        echo "未找到 libxcrypt Makefile（在 ${BUILD_DIR:-.} 下）。可能尚未生成，跳过。"
+        return 0
+    fi
+
+    echo "找到 Makefile：$found"
+    # 如果已存在标记则不重复追加
+    if grep -Fq "TARGET_CFLAGS += -Wno-error=format-nonliteral" "$found"; then
+        echo "Makefile 已包含修复项，跳过追加。"
+        return 0
+    fi
+
+    cat >> "$found" <<'EOF'
+
+# Disable format-nonliteral warning being treated as error from toolchain fortify headers
+# This avoids build failures where snprintf/sprintf are called with non-literal format strings
+TARGET_CFLAGS += -Wno-error=format-nonliteral -Wno-format-nonliteral
+EOF
+
+    echo "已向 $found 追加 TARGET_CFLAGS 修复。"
+}
