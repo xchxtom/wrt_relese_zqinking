@@ -138,6 +138,68 @@ jobs:
           du -sh ./firmware 2>/dev/null || true
           echo "=================================================="
 
+      - name: Patch libxcrypt Makefile to avoid -Werror=format-nonliteral
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # 补丁内容（heredoc，避免转义问题）
+          PATCH_TEXT=$(cat <<'EOF'
+          # Disable format-nonliteral warning being treated as error from toolchain fortify headers
+          # This avoids build failures where snprintf/sprintf are called with non-literal format strings
+          TARGET_CFLAGS += -Wno-error=format-nonliteral -Wno-format-nonliteral
+          EOF
+          )
+
+          # 常见可能位置（相对于仓库根或 action_build 子目录）
+          CANDIDATES=(
+          ./action_build/feeds/packages/libs/libxcrypt
+          ./action_build/package/feeds/packages/libxcrypt
+          ./action_build/build_dir/target-*/libxcrypt-*
+          ./action_build/build_dir/host*/libxcrypt*
+          ./feeds/packages/libs/libxcrypt
+          ./package/feeds/packages/libxcrypt
+          ./build_dir/target-*/libxcrypt-*
+          )
+
+          patched=0
+
+          for p in "${CANDIDATES[@]}"; do
+            for f in $p/Makefile; do
+              if [ -f "$f" ]; then
+                echo "Patching $f"
+                if ! grep -Fq "TARGET_CFLAGS += -Wno-error=format-nonliteral" "$f"; then
+                  printf "%s\n" "$PATCH_TEXT" >> "$f"
+                  echo "Appended patch."
+                else
+                  echo "Already patched."
+                fi
+                patched=1
+              fi
+            done
+          done
+
+          if [ "$patched" -eq 0 ]; then
+            echo "No Makefile found in standard candidates; searching action_build for libxcrypt Makefile ..."
+            found=$(find ./action_build -type f -name Makefile -path "*libxcrypt*" -print -quit || true)
+            if [ -n "$found" ]; then
+              echo "Found: $found — patching"
+            if ! grep -Fq "TARGET_CFLAGS += -Wno-error=format-nonliteral" "$found"; then
+                printf "%s\n" "$PATCH_TEXT" >> "$found"
+                echo "Appended patch to $found"
+              else
+                echo "Already patched."
+              fi
+              patched=1
+            fi
+          fi
+
+          if [ "$patched" -eq 0 ]; then
+            echo "WARNING: libxcrypt Makefile not found. Build may still fail."
+            echo "Try listing candidate dirs for debugging:"
+            find ./action_build -maxdepth 5 -type d -iname "*libxcrypt*" || true
+          fi
+      
       - name: Build Firmware
         env:
           ADD_CONFIG_FRAGMENTS: ${{ inputs.add_fragments }}
