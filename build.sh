@@ -411,6 +411,7 @@ patch_libxcrypt_makefile() {
 # Disable format-nonliteral warning being treated as error from toolchain fortify headers
 # This avoids build failures where snprintf/sprintf are called with non-literal format strings
 TARGET_CFLAGS += -Wno-error=format-nonliteral -Wno-format-nonliteral
+PKG_FORTIFY_SOURCE:=0
 EOF
 
     echo "已向 $found 追加 TARGET_CFLAGS 修复。"
